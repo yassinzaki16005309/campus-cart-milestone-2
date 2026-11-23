@@ -1,0 +1,69 @@
+# CampusCart - Milestone 2 root .gitignore
+# backend/.gitignore is kept as shipped by Laravel and is NOT replaced; these rules
+# are a second safety net for the whole repository.
+
+# ---- Dependencies --------------------------------------------------------
+node_modules/
+backend/vendor/
+
+# ---- Secrets and environment files ---------------------------------------
+# Only the *.example templates may be committed.
+.env
+.env.*
+!.env.example
+auth.json
+*.pem
+*.key
+
+# ---- Build output and caches ---------------------------------------------
+/dist/
+/out-tsc/
+/tmp/
+/coverage/
+.angular/
+.sass-cache/
+__screenshots__/
+/typings
+/connect.lock
+/libpeerconnection.log
+testem.log
+npm-debug.log*
+yarn-error.log
+
+# ---- Laravel / PHP runtime files -----------------------------------------
+# (storage/ and bootstrap/cache/ placeholders are managed by their own .gitignore files)
+*.log
+*.sqlite
+*.sqlite3
+.phpunit.cache/
+.phpunit.result.cache
+backend/bootstrap/cache/*.php
+backend/public/build/
+backend/public/hot
+backend/public/storage
+
+# ---- Editors and operating system ----------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.history/
+.DS_Store
+Thumbs.db
+
+# ---- AI-assistant / MCP tool configuration (machine specific) ------------
+.mcp.json
+.claude/
+.cursor/
+.codex/
+CLAUDE.md
+AGENTS.md
+
+# ---- Milestone 1 and course material (explicit paths, no blanket *.pdf) ---
+/course-material/
+/requirements/
+/CampusCart_Project_Report.pdf
+/cookies.patch
+/MILESTONE2_CHECKLIST.md
+/PROJECT_GUIDELINES.md

@@ -1,0 +1,19 @@
+# CampusCart - Milestone 2
+# Normalise text files to LF in the repository so Windows and Unix checkouts
+# produce identical diffs. (backend/.gitattributes already does this for backend/.)
+* text=auto eol=lf
+
+# Binary assets: never convert, never diff as text.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.jfif binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+*.zip  binary
