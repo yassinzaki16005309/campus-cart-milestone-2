@@ -1,7 +1,13 @@
 <main class="home">
 
   @if (auth.notice()) {
-    <p class="home__notice" role="status">{{ auth.notice() }}</p>
+    <p
+      class="home__notice"
+      [class.home__notice--error]="auth.noticeKind() === 'error'"
+      [attr.role]="auth.noticeKind() === 'error' ? 'alert' : 'status'"
+    >
+      {{ auth.notice() }}
+    </p>
   }
 
   <section class="home__hero">

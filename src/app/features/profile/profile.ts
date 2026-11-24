@@ -33,7 +33,20 @@ export class Profile {
 
   private router = inject(Router);
 
-  constructor(public auth: Auth) {}
+  constructor(public auth: Auth) {
+    // A message left for this page (for example the signup confirmation) is shown once.
+    const notice = auth.notice();
+
+    if (notice) {
+      if (auth.noticeKind() === 'error') {
+        this.errorMessage.set(notice);
+      } else {
+        this.successMessage.set(notice);
+      }
+
+      auth.clearNotice();
+    }
+  }
 
   // EDIT
   startEditing(): void {

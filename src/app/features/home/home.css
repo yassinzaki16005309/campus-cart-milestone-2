@@ -13,6 +13,11 @@
   text-align: center;
 }
 
+.home__notice--error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
 .home__hero {
   text-align: center;
   padding: 70px 20px;

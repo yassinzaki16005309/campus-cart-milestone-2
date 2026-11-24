@@ -303,6 +303,57 @@ describe('Auth', () => {
     expect(auth.notice()).toBe('');
   });
 
+  // SIGNUP CONFIRMATION MESSAGE
+  it('should keep the server message after signing up as a one-time notice', () => {
+    const { id: _id, ...newUser } = STUDENT;
+
+    auth.register(newUser, 'Secret123').subscribe();
+
+    answerCsrfCookie();
+    http.expectOne(`${SERVER}/api/register`).flush({
+      data: STUDENT,
+      message:
+        'Account created successfully. A confirmation email has been sent to student@campuscart.com.',
+    });
+
+    expect(auth.isLoggedIn()).toBeTrue();
+    expect(auth.notice()).toBe(
+      'Account created successfully. A confirmation email has been sent to student@campuscart.com.',
+    );
+    expect(auth.noticeKind()).toBe('success');
+  });
+
+  it('should leave no notice when the signup answer carries no message', () => {
+    const { id: _id, ...newUser } = STUDENT;
+
+    auth.register(newUser, 'Secret123').subscribe();
+
+    answerCsrfCookie();
+    http.expectOne(`${SERVER}/api/register`).flush({ data: STUDENT });
+
+    expect(auth.notice()).toBe('');
+  });
+
+  // NOTICE KINDS
+  it('should keep a notice of the kind it was given and reset both when cleared', () => {
+    expect(auth.notice()).toBe('');
+    expect(auth.noticeKind()).toBe('success');
+
+    auth.setNotice('Your student account does not have access to that page.', 'error');
+    expect(auth.notice()).toBe('Your student account does not have access to that page.');
+    expect(auth.noticeKind()).toBe('error');
+
+    auth.clearNotice();
+    expect(auth.notice()).toBe('');
+    expect(auth.noticeKind()).toBe('success');
+  });
+
+  it('should default a notice to the success kind', () => {
+    auth.setNotice('Done.');
+
+    expect(auth.noticeKind()).toBe('success');
+  });
+
   // ROLES
   it('should check a single role', () => {
     auth.setCurrentUser(STUDENT);

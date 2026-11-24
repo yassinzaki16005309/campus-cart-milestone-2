@@ -6,12 +6,15 @@ use App\Exceptions\ApiException;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
+use App\Mail\RegistrationConfirmation;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -46,8 +49,12 @@ class AuthController extends Controller
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
+        $message = $this->sendRegistrationConfirmation($user)
+            ? "Account created successfully. A confirmation email has been sent to {$user->email}."
+            : 'Account created successfully. We could not send the confirmation email right now.';
+
         return (new UserResource($user))
-            ->additional(['message' => 'Account created successfully.'])
+            ->additional(['message' => $message])
             ->response()
             ->setStatusCode(201);
     }
@@ -97,6 +104,23 @@ class AuthController extends Controller
     public function me(Request $request): UserResource
     {
         return new UserResource($request->user());
+    }
+
+    /**
+     * Milestone 2 bonus: confirmation email after a successful signup. A mail problem
+     * (for example the mail server is down) is logged but never fails the signup itself.
+     */
+    private function sendRegistrationConfirmation(User $user): bool
+    {
+        try {
+            Mail::to($user->email)->send(new RegistrationConfirmation($user));
+
+            return true;
+        } catch (Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 
     /**

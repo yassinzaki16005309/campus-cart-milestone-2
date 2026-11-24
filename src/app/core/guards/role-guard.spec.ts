@@ -77,6 +77,38 @@ describe('roleGuard', () => {
     expect(redirectTarget(executeGuard(['admin', 'student']))).toBe('/');
   });
 
+  // FEEDBACK: a refusal is explained, not silent
+  it('should explain to a student why payroll is not available', () => {
+    auth.setCurrentUser(userWithRole('student'));
+
+    expect(redirectTarget(executeGuard(['admin', 'accountant']))).toBe('/');
+
+    expect(auth.notice()).toBe('Your student account does not have access to that page.');
+    expect(auth.noticeKind()).toBe('error');
+  });
+
+  it('should name the role of the user who was refused', () => {
+    auth.setCurrentUser(userWithRole('accountant'));
+
+    executeGuard(['admin', 'student']);
+
+    expect(auth.notice()).toBe('Your accountant account does not have access to that page.');
+  });
+
+  it('should leave no notice when access is allowed', () => {
+    auth.setCurrentUser(userWithRole('admin'));
+
+    expect(executeGuard(['admin', 'accountant'])).toBeTrue();
+
+    expect(auth.notice()).toBe('');
+  });
+
+  it('should leave no access notice for a visitor who is simply sent to the login page', () => {
+    expect(redirectTarget(executeGuard(['admin']))).toBe('/login');
+
+    expect(auth.notice()).toBe('');
+  });
+
   it('should allow every role on pages open to all logged-in users', () => {
     for (const role of ['admin', 'accountant', 'student'] as UserRole[]) {
       auth.setCurrentUser(userWithRole(role));

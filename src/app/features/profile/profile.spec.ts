@@ -57,6 +57,30 @@ describe('Profile', () => {
     expect(component).toBeTruthy();
   });
 
+  // A message left for this page is shown once (for example the signup confirmation)
+  it('should show a message left for the page once, then clear it', () => {
+    auth.setNotice('Account created successfully. A confirmation email has been sent to a@b.test.');
+
+    const fresh = TestBed.createComponent(Profile);
+    fresh.detectChanges();
+
+    expect(fresh.nativeElement.textContent).toContain(
+      'Account created successfully. A confirmation email has been sent to a@b.test.',
+    );
+    expect(fresh.nativeElement.querySelector('.profile__message--success')).not.toBeNull();
+    expect(auth.notice()).toBe('');
+  });
+
+  it('should show a refusal that was left for the page as an error', () => {
+    auth.setNotice('Your student account does not have access to that page.', 'error');
+
+    const fresh = TestBed.createComponent(Profile);
+    fresh.detectChanges();
+
+    expect(fresh.nativeElement.querySelector('.profile__message--error')).not.toBeNull();
+    expect(fresh.nativeElement.querySelector('.profile__message--success')).toBeNull();
+  });
+
   // RETRIEVE
   it('should show the details of the logged-in user', () => {
     expect(text()).toContain('CampusCart Student');

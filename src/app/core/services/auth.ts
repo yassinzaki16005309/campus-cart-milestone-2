@@ -4,6 +4,8 @@ import { Observable, catchError, firstValueFrom, map, of, switchMap, tap } from 
 import { API_BASE_URL } from '../config/api.config';
 import { User, UserRole } from '../models/user.model';
 
+export type NoticeKind = 'success' | 'error';
+
 /** Fields of PUT /api/profile. Every field is optional; only what is present changes. */
 export interface ProfileChanges {
   fullName?: string;
@@ -34,9 +36,13 @@ export class Auth {
   currentUser = this.currentUserSignal.asReadonly();
 
   private noticeSignal = signal('');
+  private noticeKindSignal = signal<NoticeKind>('success');
 
   /** A one-time message for the next page (for example "Your account has been deleted."). */
   notice = this.noticeSignal.asReadonly();
+
+  /** 'success' for confirmations, 'error' for refusals (for example "no access to that page"). */
+  noticeKind = this.noticeKindSignal.asReadonly();
 
   isLoggedIn = computed(() => this.currentUserSignal() !== null);
 
@@ -75,7 +81,7 @@ export class Auth {
   register(userData: Omit<User, 'id'>, password: string): Observable<User> {
     return this.csrfCookie().pipe(
       switchMap(() =>
-        this.http.post<{ data: User }>(`${this.baseUrl}/api/register`, {
+        this.http.post<{ data: User; message?: string }>(`${this.baseUrl}/api/register`, {
           username: userData.username,
           fullName: userData.fullName,
           email: userData.email,
@@ -85,6 +91,13 @@ export class Auth {
           preferences: userData.preferences,
         }),
       ),
+      // The server's message ("Account created ... confirmation email has been sent ...")
+      // is kept as a one-time notice for the page the new user lands on.
+      tap((response) => {
+        if (response.message) {
+          this.setNotice(response.message);
+        }
+      }),
       map((response) => response.data),
       tap((user) => this.currentUserSignal.set(user)),
     );
@@ -126,14 +139,20 @@ export class Auth {
       map((response) => response.message),
       tap((message) => {
         this.currentUserSignal.set(null);
-        this.noticeSignal.set(message);
+        this.setNotice(message);
       }),
     );
   }
 
   // ONE-TIME NOTICE (shown by the page the user is sent to, then cleared by it)
+  setNotice(message: string, kind: NoticeKind = 'success'): void {
+    this.noticeKindSignal.set(kind);
+    this.noticeSignal.set(message);
+  }
+
   clearNotice(): void {
     this.noticeSignal.set('');
+    this.noticeKindSignal.set('success');
   }
 
   // CHECK USER ROLE

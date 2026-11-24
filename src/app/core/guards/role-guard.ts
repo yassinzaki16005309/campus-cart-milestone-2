@@ -1,11 +1,9 @@
-
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { Auth } from '../services/auth';
 import { UserRole } from '../models/user.model';
 
 export const roleGuard: CanActivateFn = (route, state) => {
-
   const auth = inject(Auth);
   const router = inject(Router);
 
@@ -17,8 +15,10 @@ export const roleGuard: CanActivateFn = (route, state) => {
     return router.createUrlTree(['/login']);
   }
 
-  // If the user doesn't have the required role, redirect home
+  // If the user doesn't have the required role, redirect home and say why
   if (!auth.hasRole(allowedRoles)) {
+    const role = auth.currentUser()?.role ?? 'user';
+    auth.setNotice(`Your ${role} account does not have access to that page.`, 'error');
     return router.createUrlTree(['/']);
   }
 

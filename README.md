@@ -10,14 +10,14 @@ Milestone 2 turns the Milestone 1 Angular prototype into a full-stack applicatio
 
 | Page | Roles | What it does |
 |---|---|---|
-| Home, Login, Sign up | everyone | Landing page, login (optional "remember my username"), account creation (always a student) |
+| Home, Login, Sign up | everyone | Landing page, login (optional "remember my username"), account creation (always a student) with a confirmation email |
 | Profile | admin, accountant, student | View, edit and delete your own account. Editing shows the server's validation messages; deleting asks for confirmation, is refused with a message while unpaid invoices exist, and otherwise logs you out and returns to Home with a confirmation |
 | Campus Store | admin, student | Browse products, cart, checkout ("pay now" or "add to student fees invoice") |
 | Student Fees | admin, accountant, student | Students see and pay their own invoices; staff manage invoices |
 | Staff Payroll | admin, accountant | Employees, salary components, monthly payroll report |
 | Department Budget | admin, accountant | Income and expense entries per department with charts; store payments appear automatically as Bookstore income |
 
-Navigation and data access are enforced twice: Angular route guards in the browser and role middleware on the server. Opening a URL that matches no page shows a "Page not found" screen; the API answers unknown routes and records with JSON 404 messages, which the pages display.
+Navigation and data access are enforced twice: Angular route guards in the browser and role middleware on the server. A logged-in user who opens a page their role may not use is sent Home with a message such as "Your student account does not have access to that page." Opening a URL that matches no page shows a "Page not found" screen; the API answers unknown routes and records with JSON 404 messages, which the pages display.
 
 ## Tech stack
 
@@ -96,6 +96,14 @@ The seeders create these accounts as a convenience for local development and dem
 | Accountant | `accountant` | `Account123` |
 | Student | `student` | `Student123` |
 
+## Email confirmation (bonus)
+
+When someone signs up, the server sends one "Welcome to CampusCart" email with their name, username, the interests they ticked and a link to the login page. It never contains the password or card details. The signup answer says whether the email was sent, and a mail problem never blocks the signup.
+
+- **Default (no setup):** `MAIL_MAILER=log`, so the email is written to `backend/storage/logs/laravel.log` and nothing leaves your machine. This is enough to demonstrate it.
+- **Real delivery:** put an SMTP server in your local `backend/.env` (`MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`), for example a test inbox such as Mailtrap or Mailpit. Never commit credentials.
+- **Tests:** they use the `array` mailer, so no test sends mail.
+
 ## REST API overview
 
 All routes are under `/api` (plus `GET /sanctum/csrf-cookie`). Everything except register and login requires a logged-in session. Responses are JSON with a human-readable `message`; errors use 401, 403, 404, 405, 409, 419 (CSRF), 422 (validation) and 429 (too many requests: `/login` and `/register` are each limited to 20 per minute).
@@ -138,7 +146,7 @@ Security measures:
 
 ## Testing
 
-Backend (PHPUnit, 98 tests as of the last verified run). Requirements: `backend/.env` must exist with a valid `APP_KEY` (`php artisan key:generate`), and the database user must have access to both `campus_cart` and `campus_cart_test`. `phpunit.xml` forces the `campus_cart_test` database, so the application database is never touched. The suite rebuilds `campus_cart_test` on every run, so never keep data there.
+Backend (PHPUnit, 107 tests as of the last verified run). Requirements: `backend/.env` must exist with a valid `APP_KEY` (`php artisan key:generate`), and the database user must have access to both `campus_cart` and `campus_cart_test`. `phpunit.xml` forces the `campus_cart_test` database, so the application database is never touched. The suite rebuilds `campus_cart_test` on every run, so never keep data there.
 
 Cached Laravel configuration can defeat this isolation. If `php artisan config:cache` was ever run, Laravel loads the cached configuration (with `DB_DATABASE=campus_cart` baked in) and ignores the environment values set by `phpunit.xml`; the tests would then rebuild the application database. Nothing else in the test setup guards against this, so run `php artisan config:clear` first. `composer test` does this automatically.
 
@@ -191,5 +199,5 @@ Three performance metrics are measured in the Angular app and sent to LogRocket 
 
 - Deleting an account is refused while it has unpaid invoices. After `DemoDataSeeder` the demo `student` account has two, so try deletion with an account you register yourself. The username and role cannot be changed from the profile.
 - The front end expects the API at `http://localhost:8000` and the app at `http://localhost:4200`.
-- Email confirmation on subscription (bonus) is not implemented; there is no subscription feature.
+- The email-confirmation bonus treats "subscribing" as signing up (the requirement text is cut off after "subscribes to"). Emails go to a log file by default, not to a real inbox, unless you configure a mail server (see "Email confirmation").
 - The demo passwords are public by design (see above).

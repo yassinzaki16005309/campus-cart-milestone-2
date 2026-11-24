@@ -52,6 +52,27 @@ describe('Home', () => {
     expect(notice.textContent).toContain('Your account has been deleted.');
   });
 
+  it('should show a refusal as an alert in the error style', () => {
+    auth.setNotice('Your student account does not have access to that page.', 'error');
+
+    fixture.detectChanges();
+
+    const notice: HTMLElement = fixture.nativeElement.querySelector('.home__notice');
+    expect(notice.textContent).toContain('Your student account does not have access to that page.');
+    expect(notice.classList).toContain('home__notice--error');
+    expect(notice.getAttribute('role')).toBe('alert');
+  });
+
+  it('should show a confirmation as a status in the normal style', () => {
+    leaveDeletedNotice();
+
+    fixture.detectChanges();
+
+    const notice: HTMLElement = fixture.nativeElement.querySelector('.home__notice');
+    expect(notice.classList).not.toContain('home__notice--error');
+    expect(notice.getAttribute('role')).toBe('status');
+  });
+
   it('should clear the notice when the user leaves the page', () => {
     leaveDeletedNotice();
     fixture.detectChanges();
