@@ -4,6 +4,17 @@ import { Observable, catchError, firstValueFrom, map, of, switchMap, tap } from 
 import { API_BASE_URL } from '../config/api.config';
 import { User, UserRole } from '../models/user.model';
 
+/** Fields of PUT /api/profile. Every field is optional; only what is present changes. */
+export interface ProfileChanges {
+  fullName?: string;
+  email?: string;
+  /** null removes the picture. */
+  pictureUrl?: string | null;
+  preferences?: string[];
+  /** Only the last 4 digits of a card ever leave the browser. */
+  creditCard?: string;
+}
+
 /**
  * Authentication against the Laravel API (Sanctum cookie session).
  *
@@ -21,6 +32,11 @@ export class Auth {
   private currentUserSignal = signal<User | null>(null);
 
   currentUser = this.currentUserSignal.asReadonly();
+
+  private noticeSignal = signal('');
+
+  /** A one-time message for the next page (for example "Your account has been deleted."). */
+  notice = this.noticeSignal.asReadonly();
 
   isLoggedIn = computed(() => this.currentUserSignal() !== null);
 
@@ -87,6 +103,37 @@ export class Auth {
   // SET CURRENT USER (used after login/registration, when the session expires, and in tests)
   setCurrentUser(user: User | null): void {
     this.currentUserSignal.set(user);
+  }
+
+  // UPDATE PROFILE (PUT /api/profile)
+  // Only the fields that are sent change. The server owns the role and the username.
+  // The returned user replaces the current one; the server's message is passed on.
+  updateProfile(changes: ProfileChanges): Observable<string> {
+    return this.http
+      .put<{ data: User; message: string }>(`${this.baseUrl}/api/profile`, changes)
+      .pipe(
+        tap((response) => this.currentUserSignal.set(response.data)),
+        map((response) => response.message),
+      );
+  }
+
+  // DELETE ACCOUNT (DELETE /api/profile)
+  // The server soft-deletes and anonymises the account and ends the session (409 while
+  // unpaid invoices exist: then nothing changes here). On success the user is logged out
+  // locally and a one-time notice is left for the page the user lands on.
+  deleteProfile(): Observable<string> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/api/profile`).pipe(
+      map((response) => response.message),
+      tap((message) => {
+        this.currentUserSignal.set(null);
+        this.noticeSignal.set(message);
+      }),
+    );
+  }
+
+  // ONE-TIME NOTICE (shown by the page the user is sent to, then cleared by it)
+  clearNotice(): void {
+    this.noticeSignal.set('');
   }
 
   // CHECK USER ROLE

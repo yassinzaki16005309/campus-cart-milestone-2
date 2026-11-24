@@ -11,13 +11,13 @@ Milestone 2 turns the Milestone 1 Angular prototype into a full-stack applicatio
 | Page | Roles | What it does |
 |---|---|---|
 | Home, Login, Sign up | everyone | Landing page, login (optional "remember my username"), account creation (always a student) |
-| Profile | admin, accountant, student | View the account; the API also supports update and delete (see limitations) |
+| Profile | admin, accountant, student | View, edit and delete your own account. Editing shows the server's validation messages; deleting asks for confirmation, is refused with a message while unpaid invoices exist, and otherwise logs you out and returns to Home with a confirmation |
 | Campus Store | admin, student | Browse products, cart, checkout ("pay now" or "add to student fees invoice") |
 | Student Fees | admin, accountant, student | Students see and pay their own invoices; staff manage invoices |
 | Staff Payroll | admin, accountant | Employees, salary components, monthly payroll report |
 | Department Budget | admin, accountant | Income and expense entries per department with charts; store payments appear automatically as Bookstore income |
 
-Navigation and data access are enforced twice: Angular route guards in the browser and role middleware on the server.
+Navigation and data access are enforced twice: Angular route guards in the browser and role middleware on the server. Opening a URL that matches no page shows a "Page not found" screen; the API answers unknown routes and records with JSON 404 messages, which the pages display.
 
 ## Tech stack
 
@@ -189,7 +189,7 @@ Three performance metrics are measured in the Angular app and sent to LogRocket 
 
 ## Known limitations
 
-- Profile **update and delete** exist in the API but have no screen (the Milestone 1 UI was kept unchanged). Demonstrate them with Postman or curl: send `Origin` and `Referer` set to `http://localhost:4200`, first call `GET /sanctum/csrf-cookie`, and send the `X-XSRF-TOKEN` header.
+- Deleting an account is refused while it has unpaid invoices. After `DemoDataSeeder` the demo `student` account has two, so try deletion with an account you register yourself. The username and role cannot be changed from the profile.
 - The front end expects the API at `http://localhost:8000` and the app at `http://localhost:4200`.
 - Email confirmation on subscription (bonus) is not implemented; there is no subscription feature.
 - The demo passwords are public by design (see above).

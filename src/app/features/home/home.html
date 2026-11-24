@@ -1,5 +1,9 @@
 <main class="home">
 
+  @if (auth.notice()) {
+    <p class="home__notice" role="status">{{ auth.notice() }}</p>
+  }
+
   <section class="home__hero">
 
   @if (auth.isLoggedIn()) {

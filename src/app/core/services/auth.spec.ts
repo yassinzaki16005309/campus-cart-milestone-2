@@ -220,6 +220,89 @@ describe('Auth', () => {
     expect(auth.isLoggedIn()).toBeFalse();
   });
 
+  // UPDATE PROFILE
+  it('should update the profile through PUT /api/profile and keep the returned user', () => {
+    auth.setCurrentUser(STUDENT);
+    let message: string | undefined;
+
+    auth
+      .updateProfile({ fullName: 'Renamed Student', pictureUrl: null, creditCard: '9876' })
+      .subscribe((result) => (message = result));
+
+    const request = http.expectOne(`${SERVER}/api/profile`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({
+      fullName: 'Renamed Student',
+      pictureUrl: null,
+      creditCard: '9876',
+    });
+    request.flush({
+      data: { ...STUDENT, fullName: 'Renamed Student', creditCardLast4: '9876' },
+      message: 'Profile updated successfully.',
+    });
+
+    expect(message).toBe('Profile updated successfully.');
+    expect(auth.currentUser()?.fullName).toBe('Renamed Student');
+    expect(auth.currentUser()?.creditCardLast4).toBe('9876');
+  });
+
+  it('should keep the current user when the profile update is rejected', () => {
+    auth.setCurrentUser(STUDENT);
+    let failure: HttpErrorResponse | undefined;
+
+    auth
+      .updateProfile({ email: 'taken@campuscart.com' })
+      .subscribe({ error: (error) => (failure = error) });
+
+    http
+      .expectOne(`${SERVER}/api/profile`)
+      .flush(
+        { message: 'This email is already used by another account.' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+    expect(failure?.status).toBe(422);
+    expect(auth.currentUser()).toEqual(STUDENT);
+  });
+
+  // DELETE ACCOUNT
+  it('should delete the account, log the user out locally and leave a one-time notice', () => {
+    auth.setCurrentUser(STUDENT);
+    let message: string | undefined;
+
+    auth.deleteProfile().subscribe((result) => (message = result));
+
+    const request = http.expectOne(`${SERVER}/api/profile`);
+    expect(request.request.method).toBe('DELETE');
+    request.flush({ message: 'Your account has been deleted.' });
+
+    expect(message).toBe('Your account has been deleted.');
+    expect(auth.isLoggedIn()).toBeFalse();
+    expect(auth.notice()).toBe('Your account has been deleted.');
+
+    auth.clearNotice();
+    expect(auth.notice()).toBe('');
+  });
+
+  it('should stay logged in, with no notice, when the server refuses to delete the account', () => {
+    auth.setCurrentUser(STUDENT);
+    let failure: HttpErrorResponse | undefined;
+
+    auth.deleteProfile().subscribe({ error: (error) => (failure = error) });
+
+    http.expectOne(`${SERVER}/api/profile`).flush(
+      {
+        message: 'You still have unpaid invoices. Please pay them before deleting your account.',
+        code: 'unpaid_invoices',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    expect(failure?.status).toBe(409);
+    expect(auth.currentUser()).toEqual(STUDENT);
+    expect(auth.notice()).toBe('');
+  });
+
   // ROLES
   it('should check a single role', () => {
     auth.setCurrentUser(STUDENT);

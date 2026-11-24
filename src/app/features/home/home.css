@@ -3,6 +3,16 @@
   padding: 40px 6%;
 }
 
+.home__notice {
+  max-width: 750px;
+  margin: 0 auto 25px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  background-color: #dcfce7;
+  color: #166534;
+  text-align: center;
+}
+
 .home__hero {
   text-align: center;
   padding: 70px 20px;

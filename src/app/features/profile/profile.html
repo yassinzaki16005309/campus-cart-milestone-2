@@ -18,46 +18,197 @@
         </div>
       }
 
-      <div class="profile__details">
+      @if (successMessage()) {
+        <p class="profile__message profile__message--success" role="status">
+          {{ successMessage() }}
+        </p>
+      }
 
-        <div class="profile__item">
-          <strong>Full Name</strong>
-          <span>{{ user.fullName }}</span>
-        </div>
+      @if (errorMessage()) {
+        <p class="profile__message profile__message--error" role="alert">
+          {{ errorMessage() }}
+        </p>
+      }
 
-        <div class="profile__item">
-          <strong>Username</strong>
-          <span>{{ user.username }}</span>
-        </div>
+      @if (editing()) {
 
-        <div class="profile__item">
-          <strong>Email</strong>
-          <span>{{ user.email }}</span>
-        </div>
-        @if (user.creditCardLast4) {
-  <div class="profile__item">
-    <strong>Credit Card</strong>
-    <span>•••• {{ user.creditCardLast4 }}</span>
-  </div>
-}
+        <form class="profile__form" (ngSubmit)="save()" novalidate>
 
-        <div class="profile__item">
-          <strong>Role</strong>
-          <span>{{ user.role }}</span>
-        </div>
+          <div class="profile__field">
+            <label for="fullName">Full Name</label>
+            <input
+              id="fullName"
+              type="text"
+              name="fullName"
+              [(ngModel)]="fullName"
+            >
+          </div>
 
-        <div class="profile__item">
-          <strong>Preferences</strong>
+          <div class="profile__field">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              [(ngModel)]="email"
+            >
+          </div>
 
-          @if (user.preferences.length > 0) {
-            <span>{{ user.preferences.join(', ') }}</span>
-          } @else {
-            <span>No preferences selected</span>
+          <div class="profile__field">
+            <label for="pictureUrl">Profile Picture URL</label>
+            <input
+              id="pictureUrl"
+              type="url"
+              name="pictureUrl"
+              [(ngModel)]="pictureUrl"
+            >
+          </div>
+
+          <div class="profile__field">
+            <label for="creditCard">Credit Card (Demo Only)</label>
+            <input
+              id="creditCard"
+              type="text"
+              name="creditCard"
+              [(ngModel)]="creditCard"
+              [placeholder]="user.creditCardLast4 ? 'Leave blank to keep the card ending ' + user.creditCardLast4 : 'Enter demo card information'"
+            >
+            <small>Do not enter real payment card details.</small>
+          </div>
+
+          <div class="profile__preferences">
+            <p>Preferences</p>
+
+            @for (option of preferenceOptions; track option) {
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="preferences.includes(option)"
+                  (change)="togglePreference(option)"
+                >
+                {{ option }}
+              </label>
+            }
+          </div>
+
+          <p class="profile__note">Your username and role cannot be changed.</p>
+
+          <div class="profile__actions">
+            <button
+              type="submit"
+              class="profile__button profile__button--primary"
+              [disabled]="saving()"
+            >
+              Save Changes
+            </button>
+
+            <button
+              type="button"
+              class="profile__button"
+              (click)="cancelEditing()"
+              [disabled]="saving()"
+            >
+              Cancel
+            </button>
+          </div>
+
+        </form>
+
+      } @else {
+
+        <div class="profile__details">
+
+          <div class="profile__item">
+            <strong>Full Name</strong>
+            <span>{{ user.fullName }}</span>
+          </div>
+
+          <div class="profile__item">
+            <strong>Username</strong>
+            <span>{{ user.username }}</span>
+          </div>
+
+          <div class="profile__item">
+            <strong>Email</strong>
+            <span>{{ user.email }}</span>
+          </div>
+          @if (user.creditCardLast4) {
+            <div class="profile__item">
+              <strong>Credit Card</strong>
+              <span>•••• {{ user.creditCardLast4 }}</span>
+            </div>
           }
 
+          <div class="profile__item">
+            <strong>Role</strong>
+            <span>{{ user.role }}</span>
+          </div>
+
+          <div class="profile__item">
+            <strong>Preferences</strong>
+
+            @if (user.preferences.length > 0) {
+              <span>{{ user.preferences.join(', ') }}</span>
+            } @else {
+              <span>No preferences selected</span>
+            }
+
+          </div>
+
         </div>
 
-      </div>
+        <div class="profile__actions">
+          <button
+            type="button"
+            class="profile__button profile__button--primary"
+            (click)="startEditing()"
+          >
+            Edit Profile
+          </button>
+
+          <button
+            type="button"
+            class="profile__button profile__button--danger"
+            (click)="askDelete()"
+          >
+            Delete Account
+          </button>
+        </div>
+
+        @if (confirmingDelete()) {
+          <div class="profile__confirm" role="alertdialog" aria-labelledby="delete-title">
+            <p id="delete-title">
+              <strong>Delete your account?</strong>
+            </p>
+            <p>
+              Your personal details are removed and you are logged out. Your past orders and
+              invoices are kept for the university's records. This cannot be undone, and it is
+              not possible while you still have unpaid invoices.
+            </p>
+
+            <div class="profile__actions">
+              <button
+                type="button"
+                class="profile__button profile__button--danger"
+                (click)="confirmDelete()"
+                [disabled]="deleting()"
+              >
+                Yes, Delete My Account
+              </button>
+
+              <button
+                type="button"
+                class="profile__button"
+                (click)="cancelDelete()"
+                [disabled]="deleting()"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+
+      }
 
     </div>
 
